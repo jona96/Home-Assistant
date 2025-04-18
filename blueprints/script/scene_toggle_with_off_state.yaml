@@ -1,28 +1,41 @@
 blueprint:
-  name: Scene Toggle
+  name: Scene Toggle with Off state
   description: >
 
-    ## Features
+    This script is based on the amazing work of panhans with his [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle) script.
 
-    - toggle through scenes by order or last activated timestamp
+    You can toggle your lights (and other devices) with this script on and off. For the on state, 
+    scenes are used. With multiple executions (before the reset time) this script will rotate thorugh 
+    your scenes in the given order.
 
-    - define a transition time
+    ## Example
 
-    - select scenes by area and/or include/exclude specific scenes
+    Selected scenes:
 
-    - timeout for beginning at start if using static order
+    - "ambiente"
+    - "medium"
+    - "bright"
+
+    Sequence:
+
+    - everything is off in the beginning
+    - script executed -> scene "ambiente"
+    - script executed again -> scene "medium"
+    - a while later (longer than the reset time)
+    - script executed -> turn everything off
+    - a while later (longer than the reset time)
+    - script executed -> scene "medium"
 
 
-    **Help & FAQ**: [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle)
+    **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-with-off-state)
 
 
-    **Version**: 3.2
+    **Version**: 0.1
 
-    
+
     If you like my work and support feel free to support me.
 
-
-    [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q3QEH52)
+    [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jona96)
 
   source_url: https://github.com/panhans/homeassistant/blob/main/blueprints/script/scene_toggle.yaml
   domain: script
