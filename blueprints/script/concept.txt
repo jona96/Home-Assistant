@@ -1,0 +1,27 @@
+
+Inputs:
+- scenes (ordered)
+- all devices (get from scenes?)
+- reset time
+
+States:
+- is on
+- last scene
+- scenes (ordered)
+- all devices (get from scenes?)
+- reset time
+
+States:
+- is on
+- last scene
+- last scene
+- is resetted
+
+Logic:
+- if off
+  - turn on last scene
+- else (on)
+  - if resetted
+    - turn off
+  - else
+    - switch to next scene
