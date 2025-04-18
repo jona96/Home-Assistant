@@ -41,26 +41,10 @@ blueprint:
   domain: script
 
   input:
-    area:
-      name: Name of area
-      description: Name of the area where you want to toggle scenes
-      default: ""
-      selector:
-        area:
 
-    included_scenes:
-      name: Included Scenes
-      description: Additional scenes to be included
-      default: []
-      selector:
-        entity:
-          filter:
-            domain: scene
-          multiple: true
-
-    excluded_scenes:
-      name: Excluded Scenes
-      description: Scenes to be excluded
+    scenes:
+      name: Scenes
+      description: Scenes for on state
       default: []
       selector:
         entity:
@@ -79,16 +63,10 @@ blueprint:
           step: 0.1
           unit_of_measurement: s
 
-    use_static_order:
-      name: "Static order"
-      description: "This automation is based on timestamps of the activation of the scenes. If this option is enabled a static order will be used instead of the dynamic one."
-      default: false
-      selector:
-        boolean:
-
-    reset_after:
-      name: Reset After
-      description: If the static order is activated, a timeout can be set after which the order is reset to the first scene. If 0 is set the timeout is disabled.
+    reset_time:
+      name: Reset Time
+      description: After the reset time, the script will toggle between off and the last scene instead
+        of switching between the scenes.
       default: 0
       selector:
         number:
@@ -101,10 +79,8 @@ mode: queued
 
 variables:
   area: !input "area"
-  included_scenes: !input "included_scenes"
-  excluded_scenes: !input "excluded_scenes"
-  reset_after: !input "reset_after"
-  use_static_order: !input use_static_order
+  scenes: !input "scenes"
+  reset_time: !input "reset_time"
   last_triggered: "{{ as_timestamp(iif(state_attr(this.entity_id,'last_triggered') == none, now(), state_attr(this.entity_id,'last_triggered'))) }}"
 
 sequence:
@@ -113,11 +89,11 @@ sequence:
       transition: !input transition
       entity_id: >
         {% set area_scenes = states.scene | selectattr('entity_id', 'in', area_entities(area)) | map(attribute='entity_id') | list %}
-        {% set all_scenes = (area_scenes | reject('in', excluded_scenes) | list) + included_scenes %}
+        {% set all_scenes = (area_scenes | reject('in', excluded_scenes) | list) + scenes %}
 
         {% if use_static_order == true %}
 
-          {% set is_reset = reset_after > 0 and (as_timestamp(now()) - last_triggered >= reset_after) %}
+          {% set is_reset = reset_time > 0 and (as_timestamp(now()) - last_triggered >= reset_time) %}
 
           {% if is_reset == true %}
             {{ all_scenes[0] }}
