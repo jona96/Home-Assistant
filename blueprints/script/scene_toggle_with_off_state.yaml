@@ -18,6 +18,7 @@ blueprint:
 
     - "bright"
 
+
     Sequence:
 
     - everything is off in the beginning
@@ -31,7 +32,7 @@ blueprint:
     - script executed -> turn everything off
 
     - a while later (longer than the reset time)
-    
+
     - script executed -> scene "medium"
 
 
