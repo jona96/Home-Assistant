@@ -13,17 +13,25 @@ blueprint:
     Selected scenes:
 
     - "ambiente"
+
     - "medium"
+
     - "bright"
 
     Sequence:
 
     - everything is off in the beginning
+
     - script executed -> scene "ambiente"
+
     - script executed again -> scene "medium"
+
     - a while later (longer than the reset time)
+
     - script executed -> turn everything off
+
     - a while later (longer than the reset time)
+    
     - script executed -> scene "medium"
 
 
