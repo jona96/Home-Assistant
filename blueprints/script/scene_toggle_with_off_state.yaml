@@ -67,7 +67,7 @@ blueprint:
     transition:
       name: Transition time
       description: Transition time when switching between scenes
-      default: 1
+      default: 0
       selector:
         number:
           min: 0
@@ -79,7 +79,7 @@ blueprint:
       name: Reset Time
       description: After the reset time, the script will toggle between off and the last scene instead
         of switching between the scenes.
-      default: 0
+      default: 3
       selector:
         number:
           min: 0
