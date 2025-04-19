@@ -10,17 +10,9 @@ blueprint:
 
     ## Example
 
-    Selected scenes:
-
-    - "ambiente"
-
-    - "medium"
-
-    - "bright"
-
+    Selected scenes: "ambiente", "medium", "bright"
 
     Sequence:
-
 
     - everything is off in the beginning
 
