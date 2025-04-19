@@ -21,6 +21,7 @@ blueprint:
 
     Sequence:
 
+
     - everything is off in the beginning
 
     - script executed -> scene "ambiente"
