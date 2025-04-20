@@ -2,15 +2,20 @@ blueprint:
   name: Scene Toggle with Off state
   description: >
 
-    This script is based on the amazing work of panhans with his [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle) script.
+    This script is based on the amazing work of panhans with his [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle)
+    script.
 
-    You can toggle your lights (and other devices) with this script on and off. For the on state, 
-    scenes are used. With multiple executions (before the reset time) this script will rotate thorugh 
-    your scenes in the given order. The last on scene will be remembered.
+    You can toggle your lights (and other devices) with this script on and off. For
+    the on state, scenes are used. With multiple executions (before the reset time)
+    this script will rotate through your scenes in the given order. The last on scene
+    will be remembered. A default scene can be set for turning on after a reset.
 
-    ## Example
+    ## Examples
+
+    ### Without default scene
 
     Selected scenes: "ambiente", "medium", "bright"
+    Default scene: -
 
     Sequence:
 
@@ -28,11 +33,32 @@ blueprint:
 
     - script executed -> scene "medium"
 
+    ### With default scene
+
+    Selected scenes: "ambiente", "medium", "bright"
+    Default scene: "medium"
+
+    Sequence:
+
+    - everything is off in the beginning
+
+    - script executed -> scene "medium"
+
+    - script executed again -> scene "bright"
+
+    - a while later (longer than the reset time)
+
+    - script executed -> turn everything off
+
+    - a while later (longer than the reset time)
+
+    - script executed -> scene "medium"
+
 
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
 
 
-    **Version**: 1.0
+    **Version**: 1.1
 
 
     If you like my work and support feel free to support me.
@@ -41,65 +67,130 @@ blueprint:
 
   source_url: https://github.com/jona96/homeassistant/blob/main/blueprints/script/scene_toggle_with_off_state.yaml
   domain: script
-
   input:
-
     on_scenes:
       name: On Scenes
-      description: Scenes for on state
+      description: Scenes for on state (used for cycling).
       default: []
       selector:
         entity:
           filter:
-            domain: scene
+            - domain: scene
           multiple: true
-    
     off_scene:
       name: Off Scene
-      description: Scene for off state
-      default: []
+      description: Scene for the off state.
+      default: ""
       selector:
         entity:
           filter:
-            domain: scene
+            - domain: scene
           multiple: false
-
+    default_scene_1:
+      name: "Default 1: Scene"
+      description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: scene
+          multiple: false
+    default_start_time_1:
+      name: "Default 1: Start Time"
+      description: Start time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
+    default_end_time_1:
+      name: "Default 1: End Time"
+      description: End time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
+    default_scene_2:
+      name: "Default 2: Scene"
+      description: "Optional scene to activate beween 'Default 2: Start Time' and 'Default 2: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: scene
+          multiple: false
+    default_start_time_2:
+      name: "Default 2: Start Time"
+      description: Start time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
+    default_end_time_2:
+      name: "Default 2: End Time"
+      description: End time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
+    default_scene_3:
+      name: "Default 3: Scene"
+      description: "Optional scene to activate beween 'Default 3: Start Time' and 'Default 3: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: scene
+          multiple: false
+    default_start_time_3:
+      name: "Default 3: Start Time"
+      description: Start time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
+    default_end_time_3:
+      name: "Default 3: End Time"
+      description: End time for the first time-based default scene.
+      default: ""
+      selector:
+        time:
     transition:
       name: Transition time
-      description: Transition time when switching between scenes
+      description: Transition time when switching between scenes.
       default: 0
       selector:
         number:
-          min: 0
-          max: 10
+          min: 0.0
+          max: 10.0
           step: 0.1
           unit_of_measurement: s
-
+          mode: slider
     reset_time:
       name: Reset Time
-      description: After the reset time, the script will toggle between off and the last scene instead
-        of switching between the scenes.
+      description: After this time, the script toggles between 'off' and the 'default scene' (or last 'on scene') instead of cycling.
       default: 3
       selector:
         number:
-          min: 0
-          max: 120
-          step: 1
+          min: 0.0
+          max: 120.0
+          step: 1.0
           unit_of_measurement: s
-
+          mode: slider
 mode: queued
-
 variables:
-  on_scenes: !input "on_scenes"
-  off_scene: !input "off_scene"
-  reset_time: !input "reset_time"
+  on_scenes: !input on_scenes
+  off_scene: !input off_scene
+  start_1: !input default_start_time_1
+  end_1: !input default_end_time_1
+  default_scene_1: !input default_scene_1
+  start_2: !input default_start_time_2
+  end_2: !input default_end_time_2
+  default_scene_2: !input default_scene_2
+  start_3: !input default_start_time_3
+  end_3: !input default_end_time_3
+  default_scene_3: !input default_scene_3
+  reset_time: !input reset_time
   last_triggered: >
     {{ as_timestamp(
         state_attr(this.entity_id,'last_triggered')
-        or now()
-      )
+          or now()
+        )
     }}
-
 sequence:
   - service: scene.turn_on
     data_template:
@@ -112,13 +203,25 @@ sequence:
         {% set on_scenes_sorted = (expand(on_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
         {% set last_on_scene = ((on_scenes_sorted | length) > 0 and on_scenes_sorted[0].entity_id) or on_scenes[0] %}
         {% set is_on = (last_scene != off_scene) %}
+        {% set now = now().strftime('%H:%M:%S') %}
+        {% set in_range_1 = (start_1 <= end_1 and start_1 <= now < end_1) or
+                            (start_1 > end_1 and (now >= start_1 or now < end_1)) %} {# over midnight #}
+        {% set in_range_2 = (start_2 <= end_2 and start_2 <= now < end_2) or
+                            (start_2 > end_2 and (now >= start_2 or now < end_2)) %} {# over midnight #}
+        {% set in_range_3 = (start_3 <= end_3 and start_3 <= now < end_3) or
+                            (start_3 > end_3 and (now >= start_3 or now < end_3)) %} {# over midnight #}
+        {% set default_scene = default_scene_1 if in_range_1 else (default_scene_2 if in_range_2 else (default_scene_3 if in_range_3 else "")) %}
 
         {% if is_reset %}
           {# toggle between off ↔ last on scene #}
           {% if is_on %}
             {{ off_scene }}
           {% else %}
-            {{ last_on_scene }}
+            {% if default_scene != "" %}
+              {{ default_scene }}
+            {% else %}
+              {{ last_on_scene }}
+            {% endif %}
           {% endif %}
         {% else %}
           {# switch to next scene (including off scene) #}
@@ -126,4 +229,3 @@ sequence:
           {% set next_index = (index + 1) % (all_scenes | count) %}
           {{ all_scenes[next_index] }}
         {% endif %}
-
