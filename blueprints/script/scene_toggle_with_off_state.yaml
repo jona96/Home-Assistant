@@ -127,7 +127,7 @@ variables:
     {{ as_timestamp(
         state_attr(this.entity_id,'last_triggered')
           or now()
-        )
+       )
     }}
 sequence:
   - service: scene.turn_on
@@ -147,7 +147,7 @@ sequence:
           {% if is_on %}
             {{ off_scene }}
           {% else %}
-            {% if default_scene is defined and default_scene != "" %}
+            {% if default_scene != "" %}
               {{ default_scene }}
             {% else %}
               {{ last_on_scene }}
