@@ -2,15 +2,20 @@ blueprint:
   name: Scene Toggle with Off state
   description: >
 
-    This script is based on the amazing work of panhans with his [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle) script.
+    This script is based on the amazing work of panhans with his [Simple Scene Toggle](https://community.home-assistant.io/t/simple-scene-toggle)
+    script.
 
-    You can toggle your lights (and other devices) with this script on and off. For the on state, 
-    scenes are used. With multiple executions (before the reset time) this script will rotate thorugh 
-    your scenes in the given order. The last on scene will be remembered.
+    You can toggle your lights (and other devices) with this script on and off. For
+    the on state, scenes are used. With multiple executions (before the reset time)
+    this script will rotate through your scenes in the given order. The last on scene
+    will be remembered. A default scene can be set for turning on after a reset.
 
-    ## Example
+    ## Examples
+
+    ### Without default scene
 
     Selected scenes: "ambiente", "medium", "bright"
+    Default scene: -
 
     Sequence:
 
@@ -28,11 +33,32 @@ blueprint:
 
     - script executed -> scene "medium"
 
+    ### With default scene
+
+    Selected scenes: "ambiente", "medium", "bright"
+    Default scene: "medium"
+
+    Sequence:
+
+    - everything is off in the beginning
+
+    - script executed -> scene "medium"
+
+    - script executed again -> scene "bright"
+
+    - a while later (longer than the reset time)
+
+    - script executed -> turn everything off
+
+    - a while later (longer than the reset time)
+
+    - script executed -> scene "medium"
+
 
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
 
 
-    **Version**: 1.0
+    **Version**: 1.1
 
 
     If you like my work and support feel free to support me.
@@ -41,65 +67,68 @@ blueprint:
 
   source_url: https://github.com/jona96/homeassistant/blob/main/blueprints/script/scene_toggle_with_off_state.yaml
   domain: script
-
   input:
-
     on_scenes:
       name: On Scenes
-      description: Scenes for on state
+      description: Scenes for on state (used for cycling).
       default: []
       selector:
         entity:
           filter:
-            domain: scene
+            - domain: scene
           multiple: true
-    
     off_scene:
       name: Off Scene
-      description: Scene for off state
-      default: []
+      description: Scene for the off state.
+      default: ""
       selector:
         entity:
           filter:
-            domain: scene
+            - domain: scene
           multiple: false
-
+    default_scene:
+      name: Default Scene
+      description: Optional scene to activate when turning on after the reset time. If empty, the last used 'on scene' is reactivated.
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: scene
+          multiple: false
     transition:
       name: Transition time
-      description: Transition time when switching between scenes
+      description: Transition time when switching between scenes.
       default: 0
       selector:
         number:
-          min: 0
-          max: 10
+          min: 0.0
+          max: 10.0
           step: 0.1
           unit_of_measurement: s
-
+          mode: slider
     reset_time:
       name: Reset Time
-      description: After the reset time, the script will toggle between off and the last scene instead
-        of switching between the scenes.
+      description: After this time, the script toggles between 'off' and the 'default scene' (or last 'on scene') instead of cycling.
       default: 3
       selector:
         number:
-          min: 0
-          max: 120
-          step: 1
+          min: 0.0
+          max: 120.0
+          step: 1.0
           unit_of_measurement: s
-
+          mode: slider
 mode: queued
-
 variables:
-  on_scenes: !input "on_scenes"
-  off_scene: !input "off_scene"
-  reset_time: !input "reset_time"
+  on_scenes: !input on_scenes
+  off_scene: !input off_scene
+  default_scene: !input default_scene
+  reset_time: !input reset_time
   last_triggered: >
     {{ as_timestamp(
         state_attr(this.entity_id,'last_triggered')
-        or now()
-      )
+          or now()
+       )
     }}
-
 sequence:
   - service: scene.turn_on
     data_template:
@@ -126,4 +155,3 @@ sequence:
           {% set next_index = (index + 1) % (all_scenes | count) %}
           {{ all_scenes[next_index] }}
         {% endif %}
-
