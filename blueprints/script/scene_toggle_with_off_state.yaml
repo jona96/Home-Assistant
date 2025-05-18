@@ -58,7 +58,7 @@ blueprint:
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
 
 
-    **Version**: 1.1
+    **Version**: 1.2
 
 
     If you like my work and support feel free to support me.
@@ -207,7 +207,7 @@ sequence:
                             (start_3 > end_3 and (now >= start_3 or now < end_3)) %} {# over midnight #}
         {% set default_scene = default_scene_1 if in_range_1 else (default_scene_2 if in_range_2 else (default_scene_3 if in_range_3 else "")) %}
         
-        {% set on_and_off_scenes = on_scenes + [off_scene] %}
+        {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
         {% set all_scenes = on_scenes + [off_scene, default_scene_1, default_scene_2, default_scene_3] %}
         {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
         {% set last_scene = ((all_scenes_sorted | length) > 0 and all_scenes_sorted[0].entity_id) or off_scene %}
