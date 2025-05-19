@@ -198,13 +198,13 @@ sequence:
       transition: !input transition
       entity_id: >
 
-        {% set now = now().strftime('%H:%M:%S') %}
-        {% set in_range_1 = (start_1 <= end_1 and start_1 <= now < end_1) or
-                            (start_1 > end_1 and (now >= start_1 or now < end_1)) %} {# over midnight #}
-        {% set in_range_2 = (start_2 <= end_2 and start_2 <= now < end_2) or
-                            (start_2 > end_2 and (now >= start_2 or now < end_2)) %} {# over midnight #}
-        {% set in_range_3 = (start_3 <= end_3 and start_3 <= now < end_3) or
-                            (start_3 > end_3 and (now >= start_3 or now < end_3)) %} {# over midnight #}
+        {% set now_ = now().strftime('%H:%M:%S') %}
+        {% set in_range_1 = (start_1 <= end_1 and start_1 <= now_ < end_1) or
+                            (start_1 > end_1 and (now_ >= start_1 or now_ < end_1)) %} {# over midnight #}
+        {% set in_range_2 = (start_2 <= end_2 and start_2 <= now_ < end_2) or
+                            (start_2 > end_2 and (now_ >= start_2 or now_ < end_2)) %} {# over midnight #}
+        {% set in_range_3 = (start_3 <= end_3 and start_3 <= now_ < end_3) or
+                            (start_3 > end_3 and (now_ >= start_3 or now_ < end_3)) %} {# over midnight #}
         {% set default_scene = default_scene_1 if in_range_1 else (default_scene_2 if in_range_2 else (default_scene_3 if in_range_3 else "")) %}
 
         {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
