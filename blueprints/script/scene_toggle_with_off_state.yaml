@@ -191,12 +191,12 @@ variables:
           or now()
         )
     }}
+  is_reset: "{{ (as_timestamp(now()) - last_triggered) >= reset_time }}"
 sequence:
   - service: scene.turn_on
     data_template:
       transition: !input transition
       entity_id: >
-        {% set is_reset = (as_timestamp(now()) - last_triggered) >= reset_time %}
 
         {% set now = now().strftime('%H:%M:%S') %}
         {% set in_range_1 = (start_1 <= end_1 and start_1 <= now < end_1) or
@@ -206,7 +206,7 @@ sequence:
         {% set in_range_3 = (start_3 <= end_3 and start_3 <= now < end_3) or
                             (start_3 > end_3 and (now >= start_3 or now < end_3)) %} {# over midnight #}
         {% set default_scene = default_scene_1 if in_range_1 else (default_scene_2 if in_range_2 else (default_scene_3 if in_range_3 else "")) %}
-        
+
         {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
         {% set all_scenes = on_scenes + [off_scene, default_scene_1, default_scene_2, default_scene_3] %}
         {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
