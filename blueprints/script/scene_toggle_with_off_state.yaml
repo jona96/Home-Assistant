@@ -211,54 +211,42 @@ variables:
       (default_scene_2 if is_now_in_range(start_2, end_2) else 
       (default_scene_3 if is_now_in_range(start_3, end_3) else ""))
     }}
-  on_scenes_new: >
+  all_scenes: >
     {% if default_scene == "" %}
       {{ on_scenes }}
     {% else %}
       {{ [default_scene] + on_scenes }}
     {% endif %}
-  should_turn_off: >
-    {% set is_on = namespace(any=false) %}
-    {% for scene in on_scenes_new %}
+  all_entities: >
+    {% set entities = namespace(list=[]) %}
+    {% for scene in all_scenes %}
       {% if scene != None %}
         {% set scene_entities = state_attr(scene, 'entity_id') %}
         {% if scene_entities != None %}
-          {% for entity in scene_entities %}
-            {% if states(entity) == 'on' %}
-              {% set is_on.any = true %}
-            {% endif %}
-          {% endfor %}
+          {% set entities.list = entities.list + scene_entities %}
         {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ entities.list | unique | list }}
+  should_turn_off: >
+    {% set is_on = namespace(any=false) %}
+    {% for entity in all_entities %}
+      {% if states(entity) == 'on' %}
+        {% set is_on.any = true %}
       {% endif %}
     {% endfor %}
     {{ is_on.any }}
 sequence:
-  - service: scene.turn_on
-    data_template:
-      transition: !input transition
-      entity_id: >
-        {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
-        {% set all_scenes = on_scenes + [off_scene, default_scene_1, default_scene_2, default_scene_3] %}
-        {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
-        {% set last_scene = ((all_scenes_sorted | length) > 0 and all_scenes_sorted[0].entity_id) or off_scene %}
-        {% set on_scenes_sorted = (expand(on_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
-        {% set last_on_scene = ((on_scenes_sorted | length) > 0 and on_scenes_sorted[0].entity_id) or on_scenes[0] %}
-        {% set is_on = (last_scene != off_scene) %}
-
-        {% if is_reset %}
-          {# toggle between off ↔ last on scene #}
-          {% if is_on %}
-            {{ off_scene }}
-          {% else %}
-            {% if default_scene != "" %}
-              {{ default_scene }}
-            {% else %}
-              {{ last_on_scene }}
-            {% endif %}
-          {% endif %}
-        {% else %}
-          {# switch to next scene (including off scene) #}
-          {% set index = on_and_off_scenes.index(last_scene) %}
-          {% set next_index = (index + 1) % (on_and_off_scenes | count) %}
-          {{ on_and_off_scenes[next_index] }}
-        {% endif %}
+  # turn off
+  - choose:
+    - conditions: >
+        {{ should_turn_off }}
+      sequence:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ all_entities }}"
+    # turn on/switch scene
+    default:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ all_entities }}"
