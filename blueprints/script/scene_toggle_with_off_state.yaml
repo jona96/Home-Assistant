@@ -185,13 +185,9 @@ variables:
   end_3: !input default_end_time_3
   default_scene_3: !input default_scene_3
   reset_time: !input reset_time
-  last_triggered: >
-    {{ as_timestamp(
-        state_attr(this.entity_id,'last_triggered')
-          or now()
-        )
-    }}
-  is_reset: "{{ (as_timestamp(now()) - last_triggered) >= reset_time }}"
+  is_reset: >
+    {% set last_triggered = as_timestamp(state_attr(this.entity_id,'last_triggered') or now()) %}
+    {{ (as_timestamp(now()) - last_triggered) >= reset_time }}
   default_scene: >
     {% macro is_now_in_range(start, end) %}
       {% set now_ = now().strftime('%H:%M:%S') %}
@@ -207,8 +203,8 @@ variables:
       {% endif %}
     {% endmacro %}
     {{
-      default_scene_1 if is_now_in_range(start_1, end_1) else 
-      (default_scene_2 if is_now_in_range(start_2, end_2) else 
+      default_scene_1 if is_now_in_range(start_1, end_1) else
+      (default_scene_2 if is_now_in_range(start_2, end_2) else
       (default_scene_3 if is_now_in_range(start_3, end_3) else ""))
     }}
   all_scenes: >
@@ -228,7 +224,7 @@ variables:
       {% endif %}
     {% endfor %}
     {{ entities.list | unique | list }}
-  should_turn_off: >
+  is_on: >
     {% set is_on = namespace(any=false) %}
     {% for entity in all_entities %}
       {% if states(entity) == 'on' %}
@@ -236,19 +232,38 @@ variables:
       {% endif %}
     {% endfor %}
     {{ is_on.any }}
+  last_scene: >
+    {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
+    {{ ((all_scenes_sorted | length) > 0 and all_scenes_sorted[0].entity_id) or all_scenes[0] }}
 sequence:
-  # turn off
+  # past reset time: toggle between off ↔ last on scene
   - choose:
     - conditions: >
-        {{ should_turn_off }}
+        {{ is_reset }}
       sequence:
-        - action: light.turn_off
-          target:
-            entity_id: "{{ all_entities }}"
-    # turn on/switch scene
+        - choose:
+          - conditions: >
+              {{ is_on }}
+            sequence:
+              # turn off
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ all_entities }}"
+                data:
+                  transition: !input transition
+          default:
+            # turn on default scene or last scene
+            - action: scene.turn_on
+              data_template:
+                transition: !input transition
+                entity_id: >
+                  {{ default_scene or last_scene }}
     default:
+      # switch to next scene
       - action: scene.turn_on
         data_template:
           transition: !input transition
           entity_id: >
-            {{ all_scenes[0] }}
+            {% set index = all_scenes.index(last_scene) %}
+            {% set next_index = (index + 1) % (all_scenes | count) %}
+            {{ all_scenes[next_index] }}
