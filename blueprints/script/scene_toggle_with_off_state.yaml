@@ -206,11 +206,11 @@ variables:
         {% endif %}
       {% endif %}
     {% endmacro %}
-    {% set default_scene = default_scene_1 if is_now_in_range(start_1, end_1) else 
-          (default_scene_2 if is_now_in_range(start_2, end_2) else 
-          (default_scene_3 if is_now_in_range(start_3, end_3) else "")) 
-    %}
-    {{ default_scene }}
+    {{
+      default_scene_1 if is_now_in_range(start_1, end_1) else 
+      (default_scene_2 if is_now_in_range(start_2, end_2) else 
+      (default_scene_3 if is_now_in_range(start_3, end_3) else ""))
+    }}
 sequence:
   - service: scene.turn_on
     data_template:
