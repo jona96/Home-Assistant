@@ -12,39 +12,13 @@ blueprint:
 
     ## Examples
 
-    ### Without default scene
+    Without default scene:
 
-    ```mermaid
-    graph LR;
-        Off1-->Scene1a;
-        Scene1a-->Scene2a;
-        Scene2a--after some time-->Off2;
-        Off2--after some time-->Scene2b;
+    Off -> Scene 1 -> Scene 2 -(after a while)-> Off -(after a while)-> Scene 2
 
-        Off1[Off]
-        Off2[Off]
-        Scene1a[Scene 1]
-        Scene2a[Scene 2]
-        Scene2b[Scene 2]
-    ```
-
-    ### With default scene
-
-    ```mermaid
-    graph LR;
-        Off1-->Defaulta;
-        Defaulta-->Scene1a;
-        Scene1a-->Scene2a;
-        Scene2a--after some time-->Off2;
-        Off2--after some time-->Defaultb;
-
-        Off1[Off]
-        Off2[Off]
-        Defaulta[Default]
-        Defaultb[Default]
-        Scene1a[Scene 1]
-        Scene2a[Scene 2]
-    ```
+    With default scene:
+    
+    Off -> Default -> Scene 1 -> Scene 2 -(after a while)-> Off -(after a while)-> Default
 
 
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
