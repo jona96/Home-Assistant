@@ -189,23 +189,23 @@ variables:
     {% set last_triggered = as_timestamp(state_attr(this.entity_id,'last_triggered') or now()) %}
     {{ (as_timestamp(now()) - last_triggered) >= reset_time }}
   default_scene: >
-    {% macro is_now_in_range(start, end) %}
-      {% set now_ = now().strftime('%H:%M:%S') %}
-      {% if start == "" or end == "" %}
-        {{ false }}
-      {% else %}
-        {% if start <= end %}
-          {{ start <= now_ < end }}
-        {% else %}
+    {%- macro is_now_in_range(start, end) -%}
+      {%- set now_ = now().strftime('%H:%M:%S') -%}
+      {%- if start == "" or end == "" -%}
+        {{- false -}}
+      {%- else -%}
+        {%- if start <= end -%}
+          {{- start <= now_ < end -}}
+        {%- else -%}
           {# time range spans midnight #}
-          {{ now_ >= start or now_ < end }}
-        {% endif %}
-      {% endif %}
-    {% endmacro %}
+          {{- now_ >= start or now_ < end -}}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endmacro -%}
     {{
-      default_scene_1 if is_now_in_range(start_1, end_1) else
-      (default_scene_2 if is_now_in_range(start_2, end_2) else
-      (default_scene_3 if is_now_in_range(start_3, end_3) else ""))
+      default_scene_1 if is_now_in_range(start_1, end_1) == 'True' else
+      (default_scene_2 if is_now_in_range(start_2, end_2) == 'True' else
+      (default_scene_3 if is_now_in_range(start_3, end_3) == 'True' else ""))
     }}
   all_scenes: >
     {% if default_scene == "" %}
