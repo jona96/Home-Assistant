@@ -259,11 +259,17 @@ sequence:
                 entity_id: >
                   {{ default_scene or last_scene }}
     default:
-      # switch to next scene
+      # switch to next scene or first scene directly after off
       - action: scene.turn_on
         data_template:
           transition: !input transition
           entity_id: >
-            {% set index = all_scenes.index(last_scene) %}
-            {% set next_index = (index + 1) % (all_scenes | count) %}
-            {{ all_scenes[next_index] }}
+            {% if is_on %}
+              {# next scene #}
+              {% set index = all_scenes.index(last_scene) %}
+              {% set next_index = (index + 1) % (all_scenes | count) %}
+              {{ all_scenes[next_index] }}
+            {% else %}
+              {# first scene #}
+              {{ all_scenes[0] }}
+            {% endif %}
