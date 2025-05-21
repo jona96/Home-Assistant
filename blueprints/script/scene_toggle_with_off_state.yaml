@@ -7,52 +7,44 @@ blueprint:
 
     You can toggle your lights (and other devices) with this script on and off. For
     the on state, scenes are used. With multiple executions (before the reset time)
-    this script will rotate through your scenes in the given order. The last on scene
+    this script will rotate through your scenes in the given order. The last activated scene
     will be remembered. A default scene can be set for turning on after a reset.
 
     ## Examples
 
     ### Without default scene
 
-    Selected scenes: "ambiente", "medium", "bright"
-    Default scene: -
+    ```mermaid
+    graph LR;
+        Off1-->Scene1a;
+        Scene1a-->Scene2a;
+        Scene2a--after some time-->Off2;
+        Off2--after some time-->Scene2b;
 
-    Sequence:
-
-    - everything is off in the beginning
-
-    - script executed -> scene "ambiente"
-
-    - script executed again -> scene "medium"
-
-    - a while later (longer than the reset time)
-
-    - script executed -> turn everything off
-
-    - a while later (longer than the reset time)
-
-    - script executed -> scene "medium"
+        Off1[Off]
+        Off2[Off]
+        Scene1a[Scene 1]
+        Scene2a[Scene 2]
+        Scene2b[Scene 2]
+    ```
 
     ### With default scene
 
-    Selected scenes: "ambiente", "medium", "bright"
-    Default scene: "medium"
+    ```mermaid
+    graph LR;
+        Off1-->Defaulta;
+        Defaulta-->Scene1a;
+        Scene1a-->Scene2a;
+        Scene2a--after some time-->Off2;
+        Off2--after some time-->Defaultb;
 
-    Sequence:
-
-    - everything is off in the beginning
-
-    - script executed -> scene "medium"
-
-    - script executed again -> scene "bright"
-
-    - a while later (longer than the reset time)
-
-    - script executed -> turn everything off
-
-    - a while later (longer than the reset time)
-
-    - script executed -> scene "medium"
+        Off1[Off]
+        Off2[Off]
+        Defaulta[Default]
+        Defaultb[Default]
+        Scene1a[Scene 1]
+        Scene2a[Scene 2]
+    ```
 
 
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
@@ -68,9 +60,9 @@ blueprint:
   source_url: https://github.com/jona96/homeassistant/blob/main/blueprints/script/scene_toggle_with_off_state.yaml
   domain: script
   input:
-    on_scenes:
-      name: On Scenes
-      description: Scenes for on state (used for cycling).
+    scenes:
+      name: Scenes
+      description: "Scenes used for cycling"
       default: []
       selector:
         entity:
@@ -79,7 +71,7 @@ blueprint:
           multiple: true
     default_scene_1:
       name: "Default 1: Scene"
-      description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -100,7 +92,7 @@ blueprint:
         time:
     default_scene_2:
       name: "Default 2: Scene"
-      description: "Optional scene to activate beween 'Default 2: Start Time' and 'Default 2: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 2: Start Time' and 'Default 2: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -121,7 +113,7 @@ blueprint:
         time:
     default_scene_3:
       name: "Default 3: Scene"
-      description: "Optional scene to activate beween 'Default 3: Start Time' and 'Default 3: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 3: Start Time' and 'Default 3: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -164,7 +156,7 @@ blueprint:
           mode: slider
 mode: queued
 variables:
-  on_scenes: !input on_scenes
+  scenes: !input scenes
   start_1: !input default_start_time_1
   end_1: !input default_end_time_1
   default_scene_1: !input default_scene_1
@@ -199,9 +191,9 @@ variables:
     }}
   all_scenes: >
     {% if default_scene == "" %}
-      {{ on_scenes }}
+      {{ scenes }}
     {% else %}
-      {{ [default_scene] + on_scenes }}
+      {{ [default_scene] + scenes }}
     {% endif %}
   all_entities: >
     {% set entities = namespace(list=[]) %}
