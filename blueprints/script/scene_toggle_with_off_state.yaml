@@ -77,15 +77,6 @@ blueprint:
           filter:
             - domain: scene
           multiple: true
-    off_scene:
-      name: Off Scene
-      description: Scene for the off state.
-      default: ""
-      selector:
-        entity:
-          filter:
-            - domain: scene
-          multiple: false
     default_scene_1:
       name: "Default 1: Scene"
       description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
@@ -174,7 +165,6 @@ blueprint:
 mode: queued
 variables:
   on_scenes: !input on_scenes
-  off_scene: !input off_scene
   start_1: !input default_start_time_1
   end_1: !input default_end_time_1
   default_scene_1: !input default_scene_1
