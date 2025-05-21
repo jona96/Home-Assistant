@@ -192,31 +192,30 @@ variables:
         )
     }}
   is_reset: "{{ (as_timestamp(now()) - last_triggered) >= reset_time }}"
+  default_scene: >
+    {% macro is_now_in_range(start, end) %}
+      {% set now_ = now().strftime('%H:%M:%S') %}
+      {% if start == "" or end == "" %}
+        {{ false }}
+      {% else %}
+        {% if start <= end %}
+          {{ start <= now_ < end }}
+        {% else %}
+          {# time range spans midnight #}
+          {{ now_ >= start or now_ < end }}
+        {% endif %}
+      {% endif %}
+    {% endmacro %}
+    {% set default_scene = default_scene_1 if is_now_in_range(start_1, end_1) else 
+          (default_scene_2 if is_now_in_range(start_2, end_2) else 
+          (default_scene_3 if is_now_in_range(start_3, end_3) else "")) 
+    %}
+    {{ default_scene }}
 sequence:
   - service: scene.turn_on
     data_template:
       transition: !input transition
       entity_id: >
-
-        {% macro is_now_in_range(start, end) %}
-          {% set now_ = now().strftime('%H:%M:%S') %}
-          {% if start == "" or end == "" %}
-            {{ false }}
-          {% else %}
-            {% if start <= end %}
-              {{ start <= now_ < end }}
-            {% else %}
-              {# time range spans midnight #}
-              {{ now_ >= start or now_ < end }}
-            {% endif %}
-          {% endif %}
-        {% endmacro %}
-
-        {% set default_scene = default_scene_1 if is_now_in_range(start_1, end_1) else 
-              (default_scene_2 if is_now_in_range(start_2, end_2) else 
-              (default_scene_3 if is_now_in_range(start_3, end_3) else "")) 
-        %}
-
         {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
         {% set all_scenes = on_scenes + [off_scene, default_scene_1, default_scene_2, default_scene_3] %}
         {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
