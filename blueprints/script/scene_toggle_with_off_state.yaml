@@ -211,6 +211,12 @@ variables:
       (default_scene_2 if is_now_in_range(start_2, end_2) else 
       (default_scene_3 if is_now_in_range(start_3, end_3) else ""))
     }}
+  on_scenes_new: >
+    {% if default_scene == "" %}
+      {{ on_scenes }}
+    {% else %}
+      {{ [default_scene] + on_scenes }}
+    {% endif %}
 sequence:
   - service: scene.turn_on
     data_template:
