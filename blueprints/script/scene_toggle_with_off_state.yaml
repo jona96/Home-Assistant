@@ -217,6 +217,21 @@ variables:
     {% else %}
       {{ [default_scene] + on_scenes }}
     {% endif %}
+  should_turn_off: >
+    {% set is_on = namespace(any=false) %}
+    {% for scene in on_scenes_new %}
+      {% if scene != None %}
+        {% set scene_entities = state_attr(scene, 'entity_id') %}
+        {% if scene_entities != None %}
+          {% for entity in scene_entities %}
+            {% if states(entity) == 'on' %}
+              {% set is_on.any = true %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ is_on.any }}
 sequence:
   - service: scene.turn_on
     data_template:
