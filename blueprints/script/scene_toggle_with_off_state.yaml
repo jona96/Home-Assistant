@@ -7,52 +7,18 @@ blueprint:
 
     You can toggle your lights (and other devices) with this script on and off. For
     the on state, scenes are used. With multiple executions (before the reset time)
-    this script will rotate through your scenes in the given order. The last on scene
+    this script will rotate through your scenes in the given order. The last activated scene
     will be remembered. A default scene can be set for turning on after a reset.
 
     ## Examples
 
-    ### Without default scene
+    Without default scene:
 
-    Selected scenes: "ambiente", "medium", "bright"
-    Default scene: -
+    Off -> Scene 1 -> Scene 2 -(after a while)-> Off -(after a while)-> Scene 2
 
-    Sequence:
-
-    - everything is off in the beginning
-
-    - script executed -> scene "ambiente"
-
-    - script executed again -> scene "medium"
-
-    - a while later (longer than the reset time)
-
-    - script executed -> turn everything off
-
-    - a while later (longer than the reset time)
-
-    - script executed -> scene "medium"
-
-    ### With default scene
-
-    Selected scenes: "ambiente", "medium", "bright"
-    Default scene: "medium"
-
-    Sequence:
-
-    - everything is off in the beginning
-
-    - script executed -> scene "medium"
-
-    - script executed again -> scene "bright"
-
-    - a while later (longer than the reset time)
-
-    - script executed -> turn everything off
-
-    - a while later (longer than the reset time)
-
-    - script executed -> scene "medium"
+    With default scene:
+    
+    Off -> Default -> Scene 1 -> Scene 2 -(after a while)-> Off -(after a while)-> Default
 
 
     **Help & FAQ**: [Scene Toggle with Off State](https://community.home-assistant.io/t/scene-toggle-on-off-rotate-different-on-scenes/879839)
@@ -68,27 +34,18 @@ blueprint:
   source_url: https://github.com/jona96/homeassistant/blob/main/blueprints/script/scene_toggle_with_off_state.yaml
   domain: script
   input:
-    on_scenes:
-      name: On Scenes
-      description: Scenes for on state (used for cycling).
+    scenes:
+      name: Scenes
+      description: "Scenes used for cycling"
       default: []
       selector:
         entity:
           filter:
             - domain: scene
           multiple: true
-    off_scene:
-      name: Off Scene
-      description: Scene for the off state.
-      default: ""
-      selector:
-        entity:
-          filter:
-            - domain: scene
-          multiple: false
     default_scene_1:
       name: "Default 1: Scene"
-      description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 1: Start Time' and 'Default 1: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -109,7 +66,7 @@ blueprint:
         time:
     default_scene_2:
       name: "Default 2: Scene"
-      description: "Optional scene to activate beween 'Default 2: Start Time' and 'Default 2: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 2: Start Time' and 'Default 2: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -130,7 +87,7 @@ blueprint:
         time:
     default_scene_3:
       name: "Default 3: Scene"
-      description: "Optional scene to activate beween 'Default 3: Start Time' and 'Default 3: End Time' when turning on after the reset time. If empty, the last used 'on scene' is reactivated."
+      description: "Optional scene to activate beween 'Default 3: Start Time' and 'Default 3: End Time' when turning on after the reset time. If empty, the last used scene is reactivated."
       default: ""
       selector:
         entity:
@@ -173,8 +130,7 @@ blueprint:
           mode: slider
 mode: queued
 variables:
-  on_scenes: !input on_scenes
-  off_scene: !input off_scene
+  scenes: !input scenes
   start_1: !input default_start_time_1
   end_1: !input default_end_time_1
   default_scene_1: !input default_scene_1
@@ -185,50 +141,91 @@ variables:
   end_3: !input default_end_time_3
   default_scene_3: !input default_scene_3
   reset_time: !input reset_time
-  last_triggered: >
-    {{ as_timestamp(
-        state_attr(this.entity_id,'last_triggered')
-          or now()
-        )
+  is_reset: >
+    {% set last_triggered = as_timestamp(state_attr(this.entity_id,'last_triggered') or now()) %}
+    {{ (as_timestamp(now()) - last_triggered) >= reset_time }}
+  default_scene: >
+    {%- macro is_now_in_range(start, end) -%}
+      {%- set now_ = now().strftime('%H:%M:%S') -%}
+      {%- if start == "" or end == "" -%}
+        {{- false -}}
+      {%- else -%}
+        {%- if start <= end -%}
+          {{- start <= now_ < end -}}
+        {%- else -%}
+          {# time range spans midnight #}
+          {{- now_ >= start or now_ < end -}}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endmacro -%}
+    {{
+      default_scene_1 if is_now_in_range(start_1, end_1) == 'True' else
+      (default_scene_2 if is_now_in_range(start_2, end_2) == 'True' else
+      (default_scene_3 if is_now_in_range(start_3, end_3) == 'True' else ""))
     }}
-sequence:
-  - service: scene.turn_on
-    data_template:
-      transition: !input transition
-      entity_id: >
-        {% set is_reset = (as_timestamp(now()) - last_triggered) >= reset_time %}
-
-        {% set now = now().strftime('%H:%M:%S') %}
-        {% set in_range_1 = (start_1 <= end_1 and start_1 <= now < end_1) or
-                            (start_1 > end_1 and (now >= start_1 or now < end_1)) %} {# over midnight #}
-        {% set in_range_2 = (start_2 <= end_2 and start_2 <= now < end_2) or
-                            (start_2 > end_2 and (now >= start_2 or now < end_2)) %} {# over midnight #}
-        {% set in_range_3 = (start_3 <= end_3 and start_3 <= now < end_3) or
-                            (start_3 > end_3 and (now >= start_3 or now < end_3)) %} {# over midnight #}
-        {% set default_scene = default_scene_1 if in_range_1 else (default_scene_2 if in_range_2 else (default_scene_3 if in_range_3 else "")) %}
-        
-        {% set on_and_off_scenes = [default_scene] + on_scenes + [off_scene] %}
-        {% set all_scenes = on_scenes + [off_scene, default_scene_1, default_scene_2, default_scene_3] %}
-        {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
-        {% set last_scene = ((all_scenes_sorted | length) > 0 and all_scenes_sorted[0].entity_id) or off_scene %}
-        {% set on_scenes_sorted = (expand(on_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
-        {% set last_on_scene = ((on_scenes_sorted | length) > 0 and on_scenes_sorted[0].entity_id) or on_scenes[0] %}
-        {% set is_on = (last_scene != off_scene) %}
-
-        {% if is_reset %}
-          {# toggle between off ↔ last on scene #}
-          {% if is_on %}
-            {{ off_scene }}
-          {% else %}
-            {% if default_scene != "" %}
-              {{ default_scene }}
-            {% else %}
-              {{ last_on_scene }}
-            {% endif %}
-          {% endif %}
-        {% else %}
-          {# switch to next scene (including off scene) #}
-          {% set index = on_and_off_scenes.index(last_scene) %}
-          {% set next_index = (index + 1) % (on_and_off_scenes | count) %}
-          {{ on_and_off_scenes[next_index] }}
+  all_scenes: >
+    {% if default_scene == "" %}
+      {{ scenes }}
+    {% else %}
+      {{ [default_scene] + scenes | unique | list }}
+    {% endif %}
+  all_entities: >
+    {% set entities = namespace(list=[]) %}
+    {% for scene in all_scenes %}
+      {% if scene != None %}
+        {% set scene_entities = state_attr(scene, 'entity_id') %}
+        {% if scene_entities != None %}
+          {% set entities.list = entities.list + scene_entities %}
         {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ entities.list | unique | list }}
+  is_on: >
+    {% set is_on = namespace(any=false) %}
+    {% for entity in all_entities %}
+      {% if states(entity) == 'on' %}
+        {% set is_on.any = true %}
+      {% endif %}
+    {% endfor %}
+    {{ is_on.any }}
+  last_scene: >
+    {% set all_scenes_sorted = (expand(all_scenes) | rejectattr('state','equalto','unknown') | sort(attribute='state', reverse=true)) %}
+    {{ ((all_scenes_sorted | length) > 0 and all_scenes_sorted[0].entity_id) or all_scenes[0] }}
+sequence:
+  # past reset time: toggle between off ↔ last on scene
+  - choose:
+    - conditions: >
+        {{ is_reset }}
+      sequence:
+        - choose:
+          - conditions: >
+              {{ is_on }}
+            sequence:
+              # turn off
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ all_entities }}"
+                data:
+                  transition: !input transition
+          default:
+            # turn on default scene or last scene
+            - action: scene.turn_on
+              data_template:
+                transition: !input transition
+                entity_id: >
+                  {{ default_scene or last_scene }}
+    default:
+      # switch to next scene or first scene directly after off
+      - action: scene.turn_on
+        data_template:
+          transition: !input transition
+          entity_id: >
+            {% if is_on %}
+              {# next scene #}
+              {% set index = all_scenes.index(last_scene) %}
+              {% set next_index = (index + 1) % (all_scenes | count) %}
+              {{ all_scenes[next_index] }}
+            {% else %}
+              {# first scene #}
+              {{ all_scenes[0] }}
+            {% endif %}
